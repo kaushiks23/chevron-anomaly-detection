@@ -23,25 +23,24 @@
 
 ## Key Decisions & Trade-offs
 
-- Used semantic similarity instead of just timestamp matching
+- Used semantic similarity (text meaning) between anomaly descriptions and operator logs, instead of relying solely on timestamp matching, to better capture meaningful correlations even when logs and anomalies are slightly misaligned in time
+- Chose Isolation Forest over LSTM Autoencoder due to its simplicity, speed, and minimal data requirements
 - Selected lightweight models (free-tier friendly)
-- Streamlit app for fast prototyping over Flask
+- Streamlit app for fast prototyping
 
 ## Failure Points
 
 - No ground-truth to evaluate anomaly detection
+- Isolation forest contamination is set at 5%. Can lead to false positives/negatives
 - If anomaly is repetitive, isolation forest may miss it
 - If there is a gradual pressure increase over time, isolation forest may miss it
-- Using only limited features
-- No ground-truth to evaluate anomaly detection
-- Operator logs are synthetic and repetitive
-- Correlation assumes log text is meaningful
+- Using only limited features (temperature,pressure)
 
 ## Future Work
 
-- Train on real operator logs
+- Look at a larger timeframe
 - Add visualization (timeline charts)
-- Use LSTM autoencoder to detect anomaly
-- Use BART-Large/T5 for insight generation
+- Optimize Isolation Forest by hyperparameter tuning and standardizing/normalising features
+- Experiment with LSTM autoencoder to detect anomaly
+- Experiment with BART-Large/T5 for insight generation
 - Improve log diversity
-- Integrate real-time streaming data
