@@ -1,0 +1,7 @@
+pandas
+numpy
+streamlit
+tsaug
+scikit-learn
+transformers
+sentence-transformers
