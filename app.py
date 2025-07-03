@@ -73,30 +73,49 @@ from sentence_transformers import SentenceTransformer, util
 
 
 # 4. Correlate anomalies with logs using cosine similarity of embeddings
-def correlatev2(anomalies, logs):
-    correlatedv2 = []
+
+
+def map_to_level(value, feature):
+    if feature == "temperature":
+        return "high temperature" if value > 90 else "normal temperature"
+    elif feature == "pressure":
+        return "high pressure" if value > 50 else "normal pressure"
+    return f"{feature} value"
+
+def correlate(anomalies, logs):
+    correlated = []
     log_embeddings = embedder.encode(logs['log'].tolist(), convert_to_tensor=True)
 
     for _, a_row in anomalies.iterrows():
-        anomaly_text = f"Spike detected at {a_row['timestamp']} with temperature {a_row['temperature']:.2f} and pressure {a_row['pressure']:.2f}"
+        temp_level = map_to_level(a_row['temperature'], 'temperature')
+        pressure_level = map_to_level(a_row['pressure'], 'pressure')
+        anomaly_text = f"Detected {temp_level} and {pressure_level} at {a_row['timestamp']}"
         anomaly_embedding = embedder.encode(anomaly_text, convert_to_tensor=True)
 
-        cosine_scores = util.cos_sim(anomaly_embedding, log_embeddings)[0].cpu().numpy()
-        best_idx = np.argmax(cosine_scores)
-        best_score = cosine_scores[best_idx]
+        # Filter logs to those within a 1-hour window of the anomaly
+        close_logs = logs[np.abs((logs['timestamp'] - a_row['timestamp']).dt.total_seconds()) <= 3600]
 
-        correlatedv2.append({
+        if close_logs.empty:
+            best_log = {'timestamp': None, 'log': 'No nearby log found'}
+            best_score = 0.0
+        else:
+            close_log_embeddings = embedder.encode(close_logs['log'].tolist(), convert_to_tensor=True)
+            cosine_scores = util.cos_sim(anomaly_embedding, close_log_embeddings)[0].cpu().numpy()
+            best_idx = np.argmax(cosine_scores)
+            best_score = cosine_scores[best_idx]
+            best_log = close_logs.iloc[best_idx]
+
+        correlated.append({
             'anomaly_time': a_row['timestamp'],
             'temperature': a_row['temperature'],
-            'anomaly_text': anomaly_text,
             'pressure': a_row['pressure'],
-            'log_time': logs.iloc[best_idx]['timestamp'],
-            'log': logs.iloc[best_idx]['log'],
+            'anomaly_text': anomaly_text,
+            'log_time': best_log['timestamp'],
+            'log': best_log['log'],
             'similarity_score': best_score
-
         })
 
-    return pd.DataFrame(correlatedv2)
+    return pd.DataFrame(correlated)
 
 
 # In[70]:
@@ -129,13 +148,13 @@ def main():
     st.subheader("Logs")
     st.write(logs)
 
-    correlatedv2 = correlatev2(anomalies, logs)
+    correlated = correlate(anomalies, logs)
     st.subheader("Correlated Anomalies and Logs with Similarity Score")
-    st.write(correlatedv2)
+    st.write(correlated)
 
     st.subheader("GenAI Insights")
-    for i in range(min(3, len(correlatedv2))):
-        row = correlatedv2.iloc[i]
+    for i in range(min(3, len(correlated))):
+        row = correlated.iloc[i]
         insight = generate_insight(row)
         st.markdown(f"**Insight {i+1}:** {insight}")
 
