@@ -43,5 +43,6 @@
 - Add visualization (timeline charts)
 - Use LSTM autoencoder to detect anomaly
 - Use BART-Large/T5 for insight generation
+-  Discretized numeric sensor values (e.g., temperature, pressure) into qualitative levels like "high" or "normal" to improve semantic similarity with unstructured operator logs.
 - Improve log diversity
 - Integrate real-time streaming data
