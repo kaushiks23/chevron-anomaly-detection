@@ -29,8 +29,8 @@ embedder = SentenceTransformer("all-MiniLM-L6-v2")
 
 def generate_data():
     time = pd.date_range(datetime.now() - timedelta(days=90), periods=2160, freq='H')
-    temp = AddNoise(scale=10).augment(np.random.normal(75, 2, size=len(time)))
-    pressure = AddNoise(scale=5).augment(np.random.normal(30, 1, size=len(time)))
+    temp = AddNoise(scale=0.1).augment(np.random.normal(75, 2, size=len(time)))
+    pressure = AddNoise(scale=0.1).augment(np.random.normal(30, 1, size=len(time)))
 
     df = pd.DataFrame({'timestamp': time, 'temperature': temp, 'pressure': pressure})
 
