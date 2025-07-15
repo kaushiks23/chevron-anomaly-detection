@@ -74,13 +74,23 @@ from sentence_transformers import SentenceTransformer, util
 
 # 4. Correlate anomalies with logs using cosine similarity of embeddings
 
-
 def map_to_level(value, feature):
     if feature == "temperature":
-        return "high temperature" if value > 90 else "normal temperature"
+        if value < 72:
+            return "low temperature"
+        elif value > 78:
+            return "high temperature"
+        else:
+            return "normal temperature"
     elif feature == "pressure":
-        return "high pressure" if value > 50 else "normal pressure"
+        if value < 28:
+            return "low pressure"
+        elif value > 32:
+            return "high pressure"
+        else:
+            return "normal pressure"
     return f"{feature} value"
+
 
 def correlate(anomalies, logs):
     correlated = []
